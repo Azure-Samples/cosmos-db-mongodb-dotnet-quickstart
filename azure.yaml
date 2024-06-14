@@ -6,6 +6,8 @@
 
 # Name of the application.
 name: cosmos-db-table-dotnet-quickstart
+metadata:
+  template: cosmos-db-table-dotnet-quickstart
 services:
   web:
     project: ./src/web

@@ -24,7 +24,8 @@
     "customizations": {
       "vscode": {
         "extensions": [
-          "ms-dotnettools.csharp"
+          "ms-dotnettools.csharp",
+          "bierner.markdown-mermaid"
         ]
       }
     },

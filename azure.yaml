@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: cosmos-db-mongodb-dotnet-quickstart
+metadata:
+  template: cosmos-db-mongodb-dotnet-quickstart
+services:
+  web:
+    project: ./src/web
+    language: csharp
+    host: containerapp
+    docker:
+      path: ../Dockerfile
+      context: ../
+pipeline:
+  provider: github
+hooks:
+  postprovision:
+    windows:
+      run: |
+        dotnet user-secrets set "CONFIGURATION:AZURECOSMOSDB:CONNECTIONSTRING" "$env:CONFIGURATION__AZURECOSMOSDB__CONNECTIONSTRING" --project ./src/web/Microsoft.Samples.Cosmos.MongoDB.Quickstart.Web.csproj
+        dotnet user-secrets set "CONFIGURATION:AZURECOSMOSDB:COLLECTIONNAME" "$env:CONFIGURATION__AZURECOSMOSDB__COLLECTIONNAME" --project ./src/web/Microsoft.Samples.Cosmos.MongoDB.Quickstart.Web.csproj
+      shell: pwsh
+      continueOnError: false
+      interactive: true
+    posix:
+      run: |
+        dotnet user-secrets set "CONFIGURATION:AZURECOSMOSDB:CONNECTIONSTRING" "$CONFIGURATION__AZURECOSMOSDB__CONNECTIONSTRING" --project ./src/web/Microsoft.Samples.Cosmos.MongoDB.Quickstart.Web.csproj
+        dotnet user-secrets set "CONFIGURATION:AZURECOSMOSDB:COLLECTIONNAME" "$CONFIGURATION__AZURECOSMOSDB__COLLECTIONNAME" --project ./src/web/Microsoft.Samples.Cosmos.MongoDB.Quickstart.Web.csproj
+      shell: sh
+      continueOnError: false
+      interactive: true

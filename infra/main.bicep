@@ -70,7 +70,7 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.11.2' = {
   }
 }
 
-module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = {
+module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = if (deploymentType == 'vcore') {
   name: 'cosmos-db-account-vcore'
   params: {
     name: 'cosmos-db-mongodb-vcore-${resourceToken}'
@@ -93,7 +93,7 @@ module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' 
   }
 }
 
-module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.10.2' = {
+module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.10.2' = if (deploymentType == 'request-unit') {
   name: 'cosmos-db-account-ru'
   params: {
     name: 'cosmos-db-mongodb-ru-${resourceToken}'
@@ -117,7 +117,7 @@ module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-accoun
       'EnableServerless'
     ]
     secretsExportConfiguration: {
-      primaryWriteConnectionStringSecretName: 'azure-cosmos-db-mongodb-alt-connection-string'
+      primaryWriteConnectionStringSecretName: 'azure-cosmos-db-mongodb-connection-string'
       keyVaultResourceId: keyVault.outputs.resourceId
     }
     mongodbDatabases: [

@@ -86,7 +86,7 @@ public sealed class DemoService(
 
             await writeOutputAsync($"Ran query");
 
-            foreach(Product document in await documents.ToListAsync())
+            foreach (Product document in await documents.ToListAsync())
             {
                 await writeOutputAsync($"Found document:\t{document.name}\t[{document.id}]");
 

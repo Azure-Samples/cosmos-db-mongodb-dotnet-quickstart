@@ -10,7 +10,8 @@
       "extensions": [
         "mongodb.mongodb-vscode",
         "ms-azuretools.azure-dev",
-        "ms-dotnettools.csdevkit"
+        "ms-dotnettools.csdevkit",
+        "bierner.markdown-mermaid"
       ]
     }
   }

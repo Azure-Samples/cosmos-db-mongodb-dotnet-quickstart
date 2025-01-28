@@ -70,7 +70,7 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.11.2' = {
   }
 }
 
-module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = if (deploymentType == 'vcore') {
+module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = {
   name: 'cosmos-db-account-vcore'
   params: {
     name: 'cosmos-db-mongodb-vcore-${resourceToken}'
@@ -81,11 +81,11 @@ module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' 
     highAvailabilityMode: false
     storage: 32
     administratorLogin: 'app'
-    administratorLoginPassword: 'P@ssw.rd'
+    administratorLoginPassword: 'P0ssw.rd'
     networkAcls: {
       allowAllIPs: true
       allowAzureIPs: true
-    }   
+    }
     secretsExportConfiguration: {
       connectionStringSecretName: 'azure-cosmos-db-mongodb-connection-string'
       keyVaultResourceId: keyVault.outputs.resourceId
@@ -93,7 +93,7 @@ module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' 
   }
 }
 
-module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.10.2' = if (deploymentType == 'request-unit') {
+module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.10.2' = {
   name: 'cosmos-db-account-ru'
   params: {
     name: 'cosmos-db-mongodb-ru-${resourceToken}'
@@ -117,7 +117,7 @@ module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-accoun
       'EnableServerless'
     ]
     secretsExportConfiguration: {
-      primaryWriteConnectionStringSecretName: 'azure-cosmos-db-mongodb-connection-string'
+      primaryWriteConnectionStringSecretName: 'azure-cosmos-db-mongodb-alt-connection-string'
       keyVaultResourceId: keyVault.outputs.resourceId
     }
     mongodbDatabases: [
@@ -126,7 +126,35 @@ module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-accoun
         collections: [
           {
             name: 'products'
-            shardKey: '/category'
+            indexes: [
+              {
+                key: {
+                  keys: [
+                    '_id'
+                  ]
+                }
+              }
+              {
+                key: {
+                  keys: [
+                    '$**'
+                  ]
+                }
+              }
+              {
+                key: {
+                  keys: [
+                    '_ts'
+                  ]
+                }
+                options: {
+                  expireAfterSeconds: 2629746
+                }
+              }
+            ]
+            shardKey: {
+              category: 'Hash'
+            }
           }
         ]
       }
@@ -230,11 +258,19 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
           keyVaultUrl: '${keyVault.outputs.uri}secrets/azure-cosmos-db-mongodb-connection-string'
           identity: managedIdentity.outputs.resourceId
         }
+        {
+          name: 'azure-cosmos-db-mongodb-admin-login'
+          value: 'app'
+        }
+        {
+          name: 'azure-cosmos-db-mongodb-admin-password'
+          value: 'P0ssw.rd'
+        }
       ]
     }
     containers: [
       {
-        image: 'mcr/dotnet/core/samples:aspnetapp'
+        image: '${containerRegistry.outputs.loginServer}/mcr/dotnet/samples:aspnetapp-9.0'
         name: 'web-front-end'
         resources: {
           cpu: '0.25'
@@ -244,6 +280,14 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__CONNECTIONSTRING'
             secretRef: 'azure-cosmos-db-mongodb-connection-string'
+          }
+          {
+            name: 'CONFIGURATION__AZURECOSMOSDB__ADMINLOGIN'
+            secretRef: 'azure-cosmos-db-mongodb-admin-login'
+          }
+          {
+            name: 'CONFIGURATION__AZURECOSMOSDB__ADMINPASSWORD'
+            secretRef: 'azure-cosmos-db-mongodb-admin-password'
           }
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__DATABASENAME'

@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.Extensions.Options;
 using Microsoft.Samples.Cosmos.MongoDB.Quickstart.Services;
 using Microsoft.Samples.Cosmos.MongoDB.Quickstart.Services.Interfaces;
@@ -18,7 +19,20 @@ builder.Services.AddSingleton<MongoClient>((serviceProvider) =>
     Settings.Configuration configuration = configurationOptions.Value;
 
     // <create_client>
-    MongoClient client = new(configuration.AzureCosmosDB.ConnectionString);
+    string connectionString = configuration.AzureCosmosDB.ConnectionString;
+
+    if (connectionString.Contains("<user>"))
+    {
+        connectionString = connectionString.Replace("<user>", WebUtility.UrlEncode(configuration.AzureCosmosDB.AdminLogin));
+    }
+
+    if (connectionString.Contains("<password>"))
+    {
+        connectionString = connectionString.Replace("<password>", WebUtility.UrlEncode(configuration.AzureCosmosDB.AdminPassword));
+    }
+
+    Console.WriteLine(connectionString);
+    MongoClient client = new(connectionString);
     // </create_client>
     return client;
 });

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>d9935bbf-f9c4-48bc-a820-ea9ffd830c22</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MongoDb.Driver" Version="3.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\models\Microsoft.Samples.Cosmos.MongoDB.Quickstart.Models.csproj" />
+    <ProjectReference Include="..\services\Microsoft.Samples.Cosmos.MongoDB.Quickstart.Services.csproj" />
+  </ItemGroup>
+</Project>

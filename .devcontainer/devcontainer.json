@@ -1,33 +1,18 @@
 {
-    "build": {
-      "dockerfile": "./Dockerfile",
-      "context": "."
-    },
-    "features": {
-      "ghcr.io/azure/azure-dev/azd:latest": {},
-      "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-      "ghcr.io/devcontainers/features/common-utils:2": {
-        "installZsh": "true",
-        "username": "vscode",
-        "userUid": "1000",
-        "userGid": "1000",
-        "upgradePackages": "true"
-      },
-      "ghcr.io/devcontainers/features/node:1": {
-        "version": "none"
-      },
-      "ghcr.io/devcontainers/features/git:1": {
-        "version": "latest",
-        "ppa": "false"
-      }
-    },
-    "customizations": {
-      "vscode": {
-        "extensions": [
-          "ms-dotnettools.csharp",
-          "bierner.markdown-mermaid"
-        ]
-      }
-    },
-    "remoteUser": "vscode"
+  "image": "mcr.microsoft.com/devcontainers/dotnet:9.0",
+  "features": {
+    "ghcr.io/azure/azure-dev/azd:latest": {},
+    "ghcr.io/devcontainers/features/azure-cli:latest": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "mongodb.mongodb-vscode",
+        "ms-azuretools.azure-dev",
+        "ms-dotnettools.csdevkit",
+        "bierner.markdown-mermaid"
+      ]
+    }
   }
+}

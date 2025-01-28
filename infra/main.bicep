@@ -70,95 +70,15 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.11.2' = {
   }
 }
 
-module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = if (deploymentType == 'vcore') {
-  name: 'cosmos-db-account-vcore'
+module cosmosDbAccount 'app/database.bicep' = {
+  name: 'cosmos-db-account'
   params: {
-    name: 'cosmos-db-mongodb-vcore-${resourceToken}'
+    vCoreAccountName: 'cosmos-db-mongodb-vcore-${resourceToken}'
+    requestUnitAccountName: 'cosmos-db-mongodb-ru-${resourceToken}'
     location: location
     tags: tags
-    nodeCount: 1
-    sku: 'Free'
-    highAvailabilityMode: false
-    storage: 32
-    administratorLogin: 'app'
-    administratorLoginPassword: 'P0ssw.rd'
-    networkAcls: {
-      allowAllIPs: true
-      allowAzureIPs: true
-    }
-    secretsExportConfiguration: {
-      connectionStringSecretName: 'azure-cosmos-db-mongodb-connection-string'
-      keyVaultResourceId: keyVault.outputs.resourceId
-    }
-  }
-}
-
-module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.10.2' = if (deploymentType == 'request-unit') {
-  name: 'cosmos-db-account-ru'
-  params: {
-    name: 'cosmos-db-mongodb-ru-${resourceToken}'
-    location: location
-    locations: [
-      {
-        failoverPriority: 0
-        locationName: location
-        isZoneRedundant: false
-      }
-    ]
-    tags: tags
-    disableKeyBasedMetadataWriteAccess: false
-    disableLocalAuth: false
-    networkRestrictions: {
-      publicNetworkAccess: 'Enabled'
-      ipRules: []
-      virtualNetworkRules: []
-    }
-    capabilitiesToAdd: [
-      'EnableServerless'
-    ]
-    secretsExportConfiguration: {
-      primaryWriteConnectionStringSecretName: 'azure-cosmos-db-mongodb-connection-string'
-      keyVaultResourceId: keyVault.outputs.resourceId
-    }
-    mongodbDatabases: [
-      {
-        name: 'cosmicworks'
-        collections: [
-          {
-            name: 'products'
-            indexes: [
-              {
-                key: {
-                  keys: [
-                    '_id'
-                  ]
-                }
-              }
-              {
-                key: {
-                  keys: [
-                    '$**'
-                  ]
-                }
-              }
-              {
-                key: {
-                  keys: [
-                    '_ts'
-                  ]
-                }
-                options: {
-                  expireAfterSeconds: 2629746
-                }
-              }
-            ]
-            shardKey: {
-              category: 'Hash'
-            }
-          }
-        ]
-      }
-    ]
+    deploymentType: deploymentType
+    keyVaultResourceId: keyVault.outputs.resourceId
   }
 }
 
@@ -255,16 +175,12 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
       secureList: [
         {
           name: 'azure-cosmos-db-mongodb-connection-string'
-          keyVaultUrl: '${keyVault.outputs.uri}secrets/azure-cosmos-db-mongodb-connection-string'
+          keyVaultUrl: '${keyVault.outputs.uri}secrets/${cosmosDbAccount.outputs.keyVaultSecretName}'
           identity: managedIdentity.outputs.resourceId
         }
         {
-          name: 'azure-cosmos-db-mongodb-admin-login'
-          value: 'app'
-        }
-        {
           name: 'azure-cosmos-db-mongodb-admin-password'
-          value: 'P0ssw.rd'
+          value: cosmosDbAccount.outputs.cosmosDbAccountVCoreKey
         }
       ]
     }
@@ -283,7 +199,7 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
           }
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__ADMINLOGIN'
-            secretRef: 'azure-cosmos-db-mongodb-admin-login'
+            value: 'app'
           }
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__ADMINPASSWORD'

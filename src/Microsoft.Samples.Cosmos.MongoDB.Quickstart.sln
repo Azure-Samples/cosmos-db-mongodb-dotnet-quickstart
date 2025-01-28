@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Samples.Cosmos.MongoDB.Quickstart.Web", "web\Microsoft.Samples.Cosmos.MongoDB.Quickstart.Web.csproj", "{71B9C158-D1B5-4240-8540-47EC5C237D7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Samples.Cosmos.MongoDB.Quickstart.Models", "models\Microsoft.Samples.Cosmos.MongoDB.Quickstart.Models.csproj", "{D77CFA8F-D547-48E2-9C4F-682DD00C4299}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Samples.Cosmos.MongoDB.Quickstart.Services", "services\Microsoft.Samples.Cosmos.MongoDB.Quickstart.Services.csproj", "{A372823C-B899-4E7F-9096-DCDC2F4491C4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71B9C158-D1B5-4240-8540-47EC5C237D7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71B9C158-D1B5-4240-8540-47EC5C237D7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71B9C158-D1B5-4240-8540-47EC5C237D7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71B9C158-D1B5-4240-8540-47EC5C237D7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D77CFA8F-D547-48E2-9C4F-682DD00C4299}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D77CFA8F-D547-48E2-9C4F-682DD00C4299}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D77CFA8F-D547-48E2-9C4F-682DD00C4299}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D77CFA8F-D547-48E2-9C4F-682DD00C4299}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A372823C-B899-4E7F-9096-DCDC2F4491C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A372823C-B899-4E7F-9096-DCDC2F4491C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A372823C-B899-4E7F-9096-DCDC2F4491C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A372823C-B899-4E7F-9096-DCDC2F4491C4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

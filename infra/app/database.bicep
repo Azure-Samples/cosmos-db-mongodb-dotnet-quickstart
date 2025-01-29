@@ -112,4 +112,4 @@ module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-accoun
 }
 
 output keyVaultSecretName string = keyVaultSecretName
-output cosmosDbAccountVCoreKey string = deploymentType == 'vcore' ? cosmosDbAccountVCore.outputs.connectionStringKey : ' '
+output cosmosDbAccountVCoreKey string = deploymentType == 'vcore' ? 'P0ssw.rd' : ' '

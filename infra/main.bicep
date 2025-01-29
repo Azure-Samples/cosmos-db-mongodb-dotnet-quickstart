@@ -27,7 +27,7 @@ param serviceName string = 'web'
 var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
 var tags = {
   'azd-env-name': environmentName
-  repo: 'https://github.com/azure-samples/cosmos-db-nosql-dotnet-quickstart'
+  repo: 'https://github.com/azure-samples/cosmos-db-mongodb-dotnet-quickstart'
 }
 
 module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.0' = {

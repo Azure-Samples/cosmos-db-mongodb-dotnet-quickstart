@@ -8,10 +8,11 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "bierner.markdown-mermaid",
         "mongodb.mongodb-vscode",
         "ms-azuretools.azure-dev",
-        "ms-dotnettools.csdevkit",
-        "bierner.markdown-mermaid"
+        "ms-azuretools.vscode-cosmosdb",
+        "ms-dotnettools.csdevkit"
       ]
     }
   }

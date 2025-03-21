@@ -8,8 +8,5 @@ services:
     project: ./src/web
     language: csharp
     host: containerapp
-    docker:
-      path: ../Dockerfile
-      context: ../
 pipeline:
   provider: github

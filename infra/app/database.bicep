@@ -19,6 +19,8 @@ param keyVaultResourceId string
 
 var keyVaultSecretName = 'azure-cosmos-db-mongodb-connection-string'
 
+var password = 'P0ssw.rd'
+
 module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = if (deploymentType == 'vcore') {
   name: 'cosmos-db-account-vcore'
   params: {
@@ -30,7 +32,7 @@ module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' 
     highAvailabilityMode: false
     storage: 32
     administratorLogin: 'app'
-    administratorLoginPassword: 'P0ssw.rd'
+    administratorLoginPassword: password
     networkAcls: {
       allowAllIPs: true
       allowAzureIPs: true
@@ -42,7 +44,7 @@ module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' 
   }
 }
 
-module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.10.2' = if (deploymentType == 'request-unit') {
+module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.11.3' = if (deploymentType == 'request-unit') {
   name: 'cosmos-db-account-ru'
   params: {
     name: requestUnitAccountName
@@ -112,4 +114,4 @@ module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-accoun
 }
 
 output keyVaultSecretName string = keyVaultSecretName
-output cosmosDbAccountVCoreKey string = deploymentType == 'vcore' ? 'P0ssw.rd' : ' '
+output cosmosDbAccountVCoreKey string = deploymentType == 'vcore' ? password : ' '

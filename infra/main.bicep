@@ -178,13 +178,6 @@ module containerRegistry 'br/public:avm/res/container-registry/registry:0.9.1' =
     anonymousPullEnabled: false
     publicNetworkAccess: 'Enabled'
     acrSku: 'Standard'
-    cacheRules: [
-      {
-        name: 'mcr-cache-rule'
-        sourceRepository: 'mcr.microsoft.com/*'
-        targetRepository: 'mcr/*'
-      }
-    ]
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -261,13 +254,17 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.14.1' = {
     ]
     containers: [
       {
-        image: '${containerRegistry.outputs.loginServer}/mcr/dotnet/samples:aspnetapp-9.0'
+        image: 'mcr.microsoft.com/dotnet/samples:aspnetapp-9.0'
         name: 'web-front-end'
         resources: {
           cpu: '0.25'
           memory: '.5Gi'
         }
         env: [
+          {
+            name: 'ASPNETCORE_HTTP_PORTS'
+            value: '8080'
+          }
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__CONNECTIONSTRING'
             secretRef: 'azure-cosmos-db-mongodb-connection-string'

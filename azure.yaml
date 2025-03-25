@@ -6,7 +6,7 @@ metadata:
 services:
   web:
     project: ./src/web
-    language: csharp
+    language: dotnet
     host: containerapp
 pipeline:
   provider: github

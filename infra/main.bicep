@@ -65,18 +65,100 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.12.1' = {
         roleDefinitionIdOrName: 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // Key Vault Secrets Officer
       }
     ]
+    secrets: (deploymentType == 'vcore') ? [
+      {
+        name: 'azure-cosmos-db-mongodb-connection-string'
+        value: replace(replace(cosmosDbAccountVCore.outputs.connectionStringKey, '<user>', 'app'), '<password>', 'P0ssw.rd')
+      }
+    ] : []
   }
 }
 
-module cosmosDbAccount 'app/database.bicep' = {
-  name: 'cosmos-db-account'
+module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = if (deploymentType == 'vcore') {
+  name: 'cosmos-db-account-vcore'
   params: {
-    vCoreAccountName: 'cosmos-db-mongodb-vcore-${resourceToken}'
-    requestUnitAccountName: 'cosmos-db-mongodb-ru-${resourceToken}'
+    name: 'cosmos-db-mongodb-vcore-${resourceToken}'
     location: location
     tags: tags
-    deploymentType: deploymentType
-    keyVaultResourceId: keyVault.outputs.resourceId
+    nodeCount: 1
+    sku: 'M10'
+    highAvailabilityMode: false
+    storage: 32
+    administratorLogin: 'app'
+    administratorLoginPassword: 'P0ssw.rd'
+    networkAcls: {
+      allowAllIPs: true
+      allowAzureIPs: true
+    }
+  }
+}
+
+module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.11.3' = if (deploymentType == 'request-unit') {
+  name: 'cosmos-db-account-ru'
+  params: {
+    name: 'cosmos-db-mongodb-ru-${resourceToken}'
+    location: location
+    locations: [
+      {
+        failoverPriority: 0
+        locationName: location
+        isZoneRedundant: false
+      }
+    ]
+    tags: tags
+    disableKeyBasedMetadataWriteAccess: false
+    disableLocalAuth: false
+    networkRestrictions: {
+      publicNetworkAccess: 'Enabled'
+      ipRules: []
+      virtualNetworkRules: []
+    }
+    capabilitiesToAdd: [
+      'EnableServerless'
+    ]
+    secretsExportConfiguration: {
+      primaryWriteConnectionStringSecretName: 'azure-cosmos-db-mongodb-connection-string'
+      keyVaultResourceId: keyVault.outputs.resourceId
+    }
+    mongodbDatabases: [
+      {
+        name: 'cosmicworks'
+        collections: [
+          {
+            name: 'products'
+            indexes: [
+              {
+                key: {
+                  keys: [
+                    '_id'
+                  ]
+                }
+              }
+              {
+                key: {
+                  keys: [
+                    '$**'
+                  ]
+                }
+              }
+              {
+                key: {
+                  keys: [
+                    '_ts'
+                  ]
+                }
+                options: {
+                  expireAfterSeconds: 2629746
+                }
+              }
+            ]
+            shardKey: {
+              category: 'Hash'
+            }
+          }
+        ]
+      }
+    ]
   }
 }
 
@@ -167,12 +249,8 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.14.1' = {
     secrets: [
       {
         name: 'azure-cosmos-db-mongodb-connection-string'
-        keyVaultUrl: '${keyVault.outputs.uri}secrets/${cosmosDbAccount.outputs.keyVaultSecretName}'
+        keyVaultUrl: '${keyVault.outputs.uri}secrets/azure-cosmos-db-mongodb-connection-string'
         identity: managedIdentity.outputs.resourceId
-      }
-      {
-        name: 'azure-cosmos-db-mongodb-admin-password'
-        value: cosmosDbAccount.outputs.cosmosDbAccountVCoreKey
       }
     ]
     containers: [
@@ -187,14 +265,6 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.14.1' = {
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__CONNECTIONSTRING'
             secretRef: 'azure-cosmos-db-mongodb-connection-string'
-          }
-          {
-            name: 'CONFIGURATION__AZURECOSMOSDB__ADMINLOGIN'
-            value: 'app'
-          }
-          {
-            name: 'CONFIGURATION__AZURECOSMOSDB__ADMINPASSWORD'
-            secretRef: 'azure-cosmos-db-mongodb-admin-password'
           }
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__DATABASENAME'

@@ -36,6 +36,16 @@ This is a simple Blazor web application to illustrate common basic usage of Azur
     azd init --template cosmos-db-mongodb-dotnet-quickstart
     ```
 
+1. (Optional) Select either `vcore` or `request-unit` account type using `azd env set`.
+
+    ```bash
+    azd env set "MONGODB_DEPLOYMENT_TYPE" "vcore"
+    ```
+
+    ```bash
+    azd env set "MONGODB_DEPLOYMENT_TYPE" "request-unit"
+    ```
+
 1. Ensure that **Docker** is running in your environment.
 
 1. Use `azd up` to provision your Azure infrastructure and deploy the web application to Azure.

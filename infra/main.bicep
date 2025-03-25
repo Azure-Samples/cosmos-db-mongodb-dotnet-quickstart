@@ -11,8 +11,12 @@ param environmentName string
 @description('Primary location for all resources.')
 param location string
 
-@description('Id of the principal to assign database and application roles.')
-param deploymentUserPrincipalId string = ''
+@description('(Optional) Principal identifier of the identity that is deploying the template.')
+param azureDeploymentPrincipalId string = ''
+
+var deploymentIdentityPrincipalId = !empty(azureDeploymentPrincipalId)
+  ? azureDeploymentPrincipalId
+  : deployer().objectId
 
 @allowed([
   'vcore'
@@ -39,7 +43,7 @@ module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identit
   }
 }
 
-module keyVault 'br/public:avm/res/key-vault/vault:0.11.2' = {
+module keyVault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   name: 'key-vault'
   params: {
     name: 'key-vault-${resourceToken}'
@@ -49,40 +53,122 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.11.2' = {
     enableRbacAuthorization: true
     publicNetworkAccess: 'Enabled'
     softDeleteRetentionInDays: 7
-    roleAssignments: union(
-      [
-        {
-          principalId: managedIdentity.outputs.principalId
-          principalType: 'ServicePrincipal'
-          roleDefinitionIdOrName: '4633458b-17de-408a-b874-0445c86b69e6' // Key Vault Secrets User
-        }
-      ],
-      !empty(deploymentUserPrincipalId)
-        ? [
-            {
-              principalId: deploymentUserPrincipalId
-              principalType: 'User'
-              roleDefinitionIdOrName: 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // Key Vault Secrets Officer
-            }
-          ]
-        : []
-    )
+    roleAssignments: [
+      {
+        principalId: managedIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: '4633458b-17de-408a-b874-0445c86b69e6' // Key Vault Secrets User
+      }
+      {
+        principalId: deploymentIdentityPrincipalId
+        principalType: 'User'
+        roleDefinitionIdOrName: 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // Key Vault Secrets Officer
+      }
+    ]
+    secrets: (deploymentType == 'vcore')
+      ? [
+          {
+            name: 'azure-cosmos-db-mongodb-connection-string'
+            value: replace(
+              replace(cosmosDbAccountVCore.outputs.connectionStringKey, '<user>', 'app'),
+              '<password>',
+              'P0ssw.rd'
+            )
+          }
+        ]
+      : []
   }
 }
 
-module cosmosDbAccount 'app/database.bicep' = {
-  name: 'cosmos-db-account'
+module cosmosDbAccountVCore 'br/public:avm/res/document-db/mongo-cluster:0.1.1' = if (deploymentType == 'vcore') {
+  name: 'cosmos-db-account-vcore'
   params: {
-    vCoreAccountName: 'cosmos-db-mongodb-vcore-${resourceToken}'
-    requestUnitAccountName: 'cosmos-db-mongodb-ru-${resourceToken}'
+    name: 'cosmos-db-mongodb-vcore-${resourceToken}'
     location: location
     tags: tags
-    deploymentType: deploymentType
-    keyVaultResourceId: keyVault.outputs.resourceId
+    nodeCount: 1
+    sku: 'M10'
+    highAvailabilityMode: false
+    storage: 32
+    administratorLogin: 'app'
+    administratorLoginPassword: 'P0ssw.rd'
+    networkAcls: {
+      allowAllIPs: true
+      allowAzureIPs: true
+    }
   }
 }
 
-module containerRegistry 'br/public:avm/res/container-registry/registry:0.8.0' = {
+module cosmosDbAccountRequestUnit 'br/public:avm/res/document-db/database-account:0.11.3' = if (deploymentType == 'request-unit') {
+  name: 'cosmos-db-account-ru'
+  params: {
+    name: 'cosmos-db-mongodb-ru-${resourceToken}'
+    location: location
+    locations: [
+      {
+        failoverPriority: 0
+        locationName: location
+        isZoneRedundant: false
+      }
+    ]
+    tags: tags
+    disableKeyBasedMetadataWriteAccess: false
+    disableLocalAuth: false
+    networkRestrictions: {
+      publicNetworkAccess: 'Enabled'
+      ipRules: []
+      virtualNetworkRules: []
+    }
+    capabilitiesToAdd: [
+      'EnableServerless'
+    ]
+    secretsExportConfiguration: {
+      primaryWriteConnectionStringSecretName: 'azure-cosmos-db-mongodb-connection-string'
+      keyVaultResourceId: keyVault.outputs.resourceId
+    }
+    mongodbDatabases: [
+      {
+        name: 'cosmicworks'
+        collections: [
+          {
+            name: 'products'
+            indexes: [
+              {
+                key: {
+                  keys: [
+                    '_id'
+                  ]
+                }
+              }
+              {
+                key: {
+                  keys: [
+                    '$**'
+                  ]
+                }
+              }
+              {
+                key: {
+                  keys: [
+                    '_ts'
+                  ]
+                }
+                options: {
+                  expireAfterSeconds: 2629746
+                }
+              }
+            ]
+            shardKey: {
+              category: 'Hash'
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+module containerRegistry 'br/public:avm/res/container-registry/registry:0.9.1' = {
   name: 'container-registry'
   params: {
     name: 'containerreg${resourceToken}'
@@ -92,35 +178,20 @@ module containerRegistry 'br/public:avm/res/container-registry/registry:0.8.0' =
     anonymousPullEnabled: false
     publicNetworkAccess: 'Enabled'
     acrSku: 'Standard'
-    cacheRules: [
-      {
-        name: 'mcr-cache-rule'
-        sourceRepository: 'mcr.microsoft.com/*'
-        targetRepository: 'mcr/*'
-      }
-    ]
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
         roleDefinitionIdOrName: 'AcrPull'
       }
+      {
+        principalId: deploymentIdentityPrincipalId
+        roleDefinitionIdOrName: '8311e382-0749-4cb8-b61a-304f252e45ec' // AcrPush
+      }
     ]
   }
 }
 
-module registryUserPushAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = if (!empty(deploymentUserPrincipalId)) {
-  name: 'container-registry-role-assignment-push-user'
-  params: {
-    principalId: deploymentUserPrincipalId
-    resourceId: containerRegistry.outputs.resourceId
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      '8311e382-0749-4cb8-b61a-304f252e45ec'
-    ) // AcrPush built-in role
-  }
-}
-
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.9.1' = {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.1' = {
   name: 'log-analytics-workspace'
   params: {
     name: 'log-analytics-${resourceToken}'
@@ -129,18 +200,19 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
-module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.8.2' = {
+module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.10.1' = {
   name: 'container-apps-env'
   params: {
     name: 'container-env-${resourceToken}'
     location: location
     tags: tags
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspace.outputs.resourceId
+    publicNetworkAccess: 'Enabled'
     zoneRedundant: false
   }
 }
 
-module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
+module containerAppsApp 'br/public:avm/res/app/container-app:0.14.1' = {
   name: 'container-apps-app'
   params: {
     name: 'container-app-${resourceToken}'
@@ -151,8 +223,10 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
     ingressExternal: true
     ingressTransport: 'auto'
     stickySessionsAffinity: 'sticky'
-    scaleMaxReplicas: 1
-    scaleMinReplicas: 1
+    scaleSettings: {
+      minReplicas: 1
+      maxReplicas: 1
+    }
     corsPolicy: {
       allowCredentials: true
       allowedOrigins: [
@@ -171,22 +245,16 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
         identity: managedIdentity.outputs.resourceId
       }
     ]
-    secrets: {
-      secureList: [
-        {
-          name: 'azure-cosmos-db-mongodb-connection-string'
-          keyVaultUrl: '${keyVault.outputs.uri}secrets/${cosmosDbAccount.outputs.keyVaultSecretName}'
-          identity: managedIdentity.outputs.resourceId
-        }
-        {
-          name: 'azure-cosmos-db-mongodb-admin-password'
-          value: cosmosDbAccount.outputs.cosmosDbAccountVCoreKey
-        }
-      ]
-    }
+    secrets: [
+      {
+        name: 'azure-cosmos-db-mongodb-connection-string'
+        keyVaultUrl: '${keyVault.outputs.uri}secrets/azure-cosmos-db-mongodb-connection-string'
+        identity: managedIdentity.outputs.resourceId
+      }
+    ]
     containers: [
       {
-        image: '${containerRegistry.outputs.loginServer}/mcr/dotnet/samples:aspnetapp-9.0'
+        image: 'mcr.microsoft.com/dotnet/samples:aspnetapp-9.0'
         name: 'web-front-end'
         resources: {
           cpu: '0.25'
@@ -194,16 +262,12 @@ module containerAppsApp 'br/public:avm/res/app/container-app:0.12.1' = {
         }
         env: [
           {
+            name: 'ASPNETCORE_HTTP_PORTS'
+            value: '8080'
+          }
+          {
             name: 'CONFIGURATION__AZURECOSMOSDB__CONNECTIONSTRING'
             secretRef: 'azure-cosmos-db-mongodb-connection-string'
-          }
-          {
-            name: 'CONFIGURATION__AZURECOSMOSDB__ADMINLOGIN'
-            value: 'app'
-          }
-          {
-            name: 'CONFIGURATION__AZURECOSMOSDB__ADMINPASSWORD'
-            secretRef: 'azure-cosmos-db-mongodb-admin-password'
           }
           {
             name: 'CONFIGURATION__AZURECOSMOSDB__DATABASENAME'

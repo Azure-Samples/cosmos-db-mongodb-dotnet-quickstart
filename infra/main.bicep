@@ -65,12 +65,18 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.12.1' = {
         roleDefinitionIdOrName: 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // Key Vault Secrets Officer
       }
     ]
-    secrets: (deploymentType == 'vcore') ? [
-      {
-        name: 'azure-cosmos-db-mongodb-connection-string'
-        value: replace(replace(cosmosDbAccountVCore.outputs.connectionStringKey, '<user>', 'app'), '<password>', 'P0ssw.rd')
-      }
-    ] : []
+    secrets: (deploymentType == 'vcore')
+      ? [
+          {
+            name: 'azure-cosmos-db-mongodb-connection-string'
+            value: replace(
+              replace(cosmosDbAccountVCore.outputs.connectionStringKey, '<user>', 'app'),
+              '<password>',
+              'P0ssw.rd'
+            )
+          }
+        ]
+      : []
   }
 }
 

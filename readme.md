@@ -1,8 +1,8 @@
 <!--
 ---
 page_type: sample
-name: "Quickstart: Azure Cosmos DB for MongoDB and Azure SDK for .NET"
-description: This is a simple ASP.NET web application to illustrate common basic usage of Azure Cosmos DB for MongoDB and the Azure SDK for .NET.
+name: "Quickstart: Azure Cosmos DB for MongoDB and .NET"
+description: This is a simple ASP.NET web application to illustrate common basic usage of Azure Cosmos DB for MongoDB and .NET.
 urlFragment: template
 languages:
 - csharp
@@ -12,9 +12,9 @@ products:
 ---
 -->
 
-# Quickstart: Azure Cosmos DB for MongoDB - Azure SDK for .NET
+# Quickstart: Azure Cosmos DB for MongoDB - .NET
 
-This is a simple Blazor web application to illustrate common basic usage of Azure Cosmos DB for MongoDB with the Azure SDK for .NET
+This is a simple Blazor web application to illustrate common basic usage of Azure Cosmos DB for MongoDB with .NET
 
 ## Prerequisites
 
